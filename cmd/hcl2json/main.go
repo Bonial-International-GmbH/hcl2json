@@ -8,7 +8,7 @@ import (
 )
 
 func newRootCommand() *cobra.Command {
-	opts := &options{
+	opts := options{
 		pretty:      true,
 		pattern:     "**/*.tf",
 		parallelism: 10,
@@ -21,7 +21,9 @@ func newRootCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
 
-			return opts.run(cmd.InOrStdin(), cmd.OutOrStdout(), args)
+			converter := newConverter(cmd.InOrStdin(), cmd.OutOrStdout(), opts)
+
+			return converter.run(args)
 		},
 	}
 

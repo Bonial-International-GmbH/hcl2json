@@ -20,14 +20,28 @@ type options struct {
 	parallelism int
 }
 
-func (o *options) run(in io.Reader, out io.Writer, paths []string) error {
-	converted, err := o.convert(in, paths)
+type converter struct {
+	opts options
+	in   io.Reader
+	out  io.Writer
+}
+
+func newConverter(in io.Reader, out io.Writer, opts options) *converter {
+	return &converter{
+		in:   in,
+		out:  out,
+		opts: opts,
+	}
+}
+
+func (c *converter) run(paths []string) error {
+	converted, err := c.convert(paths)
 	if err != nil {
 		return err
 	}
 
-	if !o.pretty {
-		_, err = out.Write(converted)
+	if !c.opts.pretty {
+		_, err = c.out.Write(converted)
 	} else {
 		var indented bytes.Buffer
 
@@ -36,7 +50,7 @@ func (o *options) run(in io.Reader, out io.Writer, paths []string) error {
 			return fmt.Errorf("failed to indent file: %w", err)
 		}
 
-		_, err = indented.WriteTo(out)
+		_, err = indented.WriteTo(c.out)
 	}
 
 	if err != nil {
@@ -47,20 +61,20 @@ func (o *options) run(in io.Reader, out io.Writer, paths []string) error {
 }
 
 // convert converts HCL files to JSON.
-func (o *options) convert(in io.Reader, paths []string) ([]byte, error) {
+func (c *converter) convert(paths []string) ([]byte, error) {
 	opts := &convert.Options{
-		Simplify: o.simplify,
+		Simplify: c.opts.simplify,
 	}
 
 	if len(paths) == 0 {
-		return convertReader(in, "", opts)
+		return convertReader(c.in, "", opts)
 	}
 
 	if len(paths) == 1 {
 		path := paths[0]
 
 		if path == "" || path == "-" {
-			return convertReader(in, "", opts)
+			return convertReader(c.in, "", opts)
 		}
 
 		isDir, err := isDirectory(path)
@@ -71,12 +85,12 @@ func (o *options) convert(in io.Reader, paths []string) ([]byte, error) {
 		}
 	}
 
-	filePaths, err := o.resolveFilePaths(paths)
+	filePaths, err := c.resolveFilePaths(paths)
 	if err != nil {
 		return nil, err
 	}
 
-	return o.convertFiles(filePaths, opts)
+	return c.convertFiles(filePaths, opts)
 }
 
 // convertReader reads HCL from r and converts it to JSON using opts. Path
@@ -106,7 +120,7 @@ func convertFile(path string, opts *convert.Options) ([]byte, error) {
 	return convertReader(f, path, opts)
 }
 
-func (o *options) resolveFilePaths(paths []string) ([]string, error) {
+func (c *converter) resolveFilePaths(paths []string) ([]string, error) {
 	var filePaths []string
 
 	for _, path := range paths {
@@ -114,7 +128,7 @@ func (o *options) resolveFilePaths(paths []string) ([]string, error) {
 		if err != nil {
 			return nil, err
 		} else if isDir {
-			globPattern := filepath.Join(path, o.pattern)
+			globPattern := filepath.Join(path, c.opts.pattern)
 
 			matches, err := filepath.Glob(globPattern)
 			if err != nil {
@@ -137,12 +151,12 @@ type result struct {
 
 // convertFiles converts multiple files in parallel and returns the JSON
 // representation of the files keyed by file path.
-func (o *options) convertFiles(filePaths []string, opts *convert.Options) ([]byte, error) {
+func (c *converter) convertFiles(filePaths []string, opts *convert.Options) ([]byte, error) {
 	if len(filePaths) == 0 {
 		return nil, nil
 	}
 
-	numWorkers := min(o.parallelism, len(filePaths))
+	numWorkers := max(1, min(c.opts.parallelism, len(filePaths)))
 
 	errCh := make(chan error, numWorkers)
 	defer close(errCh)
