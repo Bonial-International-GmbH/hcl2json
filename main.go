@@ -65,7 +65,7 @@ func run(in io.Reader, out io.Writer, args []string, opts *options) error {
 	} else {
 		var indented bytes.Buffer
 
-		err := json.Indent(&indented, converted, "", "    ")
+		err = json.Indent(&indented, converted, "", "    ")
 		if err != nil {
 			return fmt.Errorf("failed to indent file: %w", err)
 		}
