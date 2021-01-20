@@ -12,6 +12,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Version is set via build args.
+var version = "v0.0.0-devel"
+
 type options struct {
 	simplify    bool
 	pretty      bool
@@ -30,6 +33,7 @@ func newRootCommand() *cobra.Command {
 		Use:           "hcl2json [paths...]",
 		Short:         "Converts HCL files to JSON.",
 		SilenceErrors: true,
+		Version:       version,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
 
