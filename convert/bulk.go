@@ -80,6 +80,10 @@ func Bulk(concurrency int, paths []string, options Options) ([]byte, error) {
 			// Treat result bytes as raw JSON to prevent double encoding.
 			fileMap[res.path] = json.RawMessage(res.bytes)
 		case err := <-errCh:
+			// Drain workCh to avoid leaking a goroutine.
+			for range workCh {
+			}
+
 			return nil, err
 		}
 	}
