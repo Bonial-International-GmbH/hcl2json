@@ -11,9 +11,7 @@ help:
 
 .PHONY: build
 build: ## build hcl2jon
-	go build -ldflags \
-	  "-s -w" \
-	  ./cmd/hcl2json
+	go build -ldflags "-s -w" -o hcl2json main.go
 
 .PHONY: install
 install: build ## install hcl2jon
