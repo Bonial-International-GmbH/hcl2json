@@ -45,6 +45,15 @@ func newRootCommand() *cobra.Command {
 	return cmd
 }
 
+func main() {
+	cmd := newRootCommand()
+
+	if err := cmd.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
 func run(in io.Reader, out io.Writer, args []string, opts *options) error {
 	converted, err := convertArgs(in, args, opts)
 	if err != nil {
@@ -133,24 +142,17 @@ func collectFiles(paths []string, ext string) ([]string, error) {
 	return filePaths, nil
 }
 
+// glob recursively scans dir for files with the given extension and returns
+// them. The extension must start with a dot.
 func glob(dir string, ext string) ([]string, error) {
 	var files []string
 
 	err := filepath.Walk(dir, func(path string, f os.FileInfo, err error) error {
-		if filepath.Ext(path) == ext {
+		if f.Mode().IsRegular() && filepath.Ext(path) == ext {
 			files = append(files, path)
 		}
 		return nil
 	})
 
 	return files, err
-}
-
-func main() {
-	cmd := newRootCommand()
-
-	if err := cmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
 }

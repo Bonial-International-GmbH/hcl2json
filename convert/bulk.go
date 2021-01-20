@@ -5,8 +5,8 @@ import (
 	"sync"
 )
 
-// Bulk converts multiple files concurrently. The resulting byte slice contains
-// a JSON object keyed by file path, e.g.:
+// Bulk converts multiple HCL files concurrently to their JSON representation.
+// The resulting byte slice contains a JSON object keyed by file path, e.g.:
 //
 //   {
 //     "path/to/file.tf":{"resource":{"aws_route53_record":{"type": "CNAME", ...}}}},
