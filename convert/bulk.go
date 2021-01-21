@@ -18,7 +18,7 @@ func Bulk(concurrency int, paths []string, options Options) ([]byte, error) {
 		return []byte(`{}`), nil
 	}
 
-	if concurrency < 0 {
+	if concurrency <= 0 {
 		concurrency = 1
 	} else if len(paths) < concurrency {
 		concurrency = len(paths)
