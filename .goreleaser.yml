@@ -13,23 +13,13 @@ builds:
       - darwin
       - windows
     goarch:
-      - 386
       - amd64
-    ignore:
-      - goos: darwin
-        goarch: 386
-      - goos: windows
-        goarch: 386
+      - arm64
 archives:
   - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
     format: binary
     files:
       - none*
-    replacements:
-      linux: Linux
-      darwin: Darwin
-      386: i386
-      amd64: x86_64
 release:
   github:
     owner: Bonial-International-GmbH
